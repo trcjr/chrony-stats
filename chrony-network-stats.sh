@@ -28,9 +28,8 @@ DISPLAY_PRESET="default" # Preset for large screens. Options: default | 2k | 4k
 TIMEOUT_SECONDS=5
 SERVER_STATS_UPPER_LIMIT=100000 ## When chrony restarts, it generate abnormally high values (e.g., 12M) | This filters out values above the threshold
 ##############################################################
-
-WIDTH=800   ## These graph sizes are changing with DISPLAY_PRESET
-HEIGHT=300  ## 
+HEIGHT=300
+WIDTH=1400
 
 log_message() {
     local level="$1"
@@ -137,7 +136,7 @@ collect_chrony_data() {
     fi
     
     get_html() {
-        timeout "$TIMEOUT_SECONDS"s sudo chronyc $CHRONYC_OPTS "$1" -v 2>&1 | sed 's/&/\&/g;s/</\</g;s/>/\>/g;s/$/<br>/' || {
+        timeout "$TIMEOUT_SECONDS"s sudo chronyc $CHRONYC_OPTS "$1" -v 2>&1 | sed 's/&/\&amp;/g;s/</\&lt;/g;s/>/\&gt;/g' || {
             log_message "ERROR" "Failed to collect chronyc $1 data"
             return 1
         }
@@ -147,7 +146,7 @@ collect_chrony_data() {
         log_message "ERROR" "Failed to collect chronyc tracking data"
         exit 1
     }
-    CHRONYC_TRACKING_HTML=$(echo "$RAW_TRACKING" | sed 's/&/\&/g;s/</\</g;s/>/\>/g;s/$/<br>/')
+    CHRONYC_TRACKING_HTML=$(echo "$RAW_TRACKING" | sed 's/&/\&amp;/g;s/</\&lt;/g;s/>/\&gt;/g')
     CHRONYC_SOURCES=$(get_html sources) || exit 1
     CHRONYC_SOURCESTATS=$(get_html sourcestats) || exit 1
     CHRONYC_SELECTDATA=$(get_html selectdata) || exit 1
@@ -389,8 +388,11 @@ generate_graphs() {
             local graph_title="${graphs[$graph]//PERIOD_TITLE/${period_titles[$period]}}"
             local output_file="$OUTPUT_DIR/img/${graph}_${period}.png"
             local time_range="${time_periods[$period]}"
-            
-            local cmd="LC_ALL=C rrdtool graph '$output_file' --width '$WIDTH' --height '$HEIGHT' --start $time_range --end now-180s $graph_title"
+            # Use dark theme colors for rrdtool graphs to avoid white backgrounds
+            # Use only color names that are commonly supported by rrdtool
+            local RRD_DARK_COLORS="--color BACK#071028 --color CANVAS#071028 --color SHADEA#071028 --color SHADEB#071a2a --color GRID#092033 --color MGRID#0b1824 --color FONT#cfe8f8 --color AXIS#274055"
+
+            local cmd="LC_ALL=C rrdtool graph '$output_file' --width '$WIDTH' --height '$HEIGHT' --start $time_range --end now-180s $RRD_DARK_COLORS $graph_title"
             eval "$cmd" || {
                 log_message "ERROR" "Failed to generate graph: ${graph}_${period}"
                 exit 1
@@ -423,33 +425,44 @@ $AUTO_REFRESH_META
     <title>${PAGE_TITLE} - Server Status</title>
     <style>
         :root {
-            --primary-text: #212529;
-            --secondary-text: #6c757d;
-            --background-color: #f8f9fa;
-            --content-background: #ffffff;
-            --border-color: #787879;
-            --code-background: #e1e1e1;
-            --code-text: #000000;
+            --primary-text: #e6eef6;
+            --secondary-text: #9aa8bf;
+            --background-color: #071028; /* page background base */
+            --content-background: #0b1220; /* card background */
+            --border-color: rgba(255,255,255,0.03);
+            --code-background: rgba(255,255,255,0.02);
+            --code-text: #cfe8f8;
             --container-max: 1400px;
             --font-size-base: 16px;
         }
 $CSS_CUSTOM_ROOT
+        /* Ensure the viewport is fully covered by the same gradient to avoid seams */
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(180deg,#071028 0%, #071a2a 100%);
+            background-attachment: fixed;
+            background-repeat: no-repeat;
+            color: var(--primary-text);
+            font-size: var(--font-size-base);
+        }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background-color: var(--background-color);
-            color: var(--primary-text);
             line-height: 1.6;
-            font-size: var(--font-size-base);
+            /* fallback for clients that don't render gradients correctly */
+            background-color: var(--background-color);
         }
         .container {
             max-width: var(--container-max);
-            margin: 0 auto;
+            margin: 28px auto;
             background-color: var(--content-background);
-            padding: 20px 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+            padding: 28px;
+            border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(2,6,23,0.6);
+            -webkit-backdrop-filter: blur(6px);
+            backdrop-filter: blur(6px);
+            background-clip: padding-box;
         }
         header {
             text-align: center;
@@ -546,12 +559,12 @@ $CSS_CUSTOM_ROOT
             background-color: var(--code-background);
             color: var(--code-text);
             padding: 10px;
-            border: 1px solid #c3bebe;
-            border-radius: 4px;
+                border: 1px solid rgba(255,255,255,0.03);
+                border-radius: 6px;
             overflow-x: auto;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            font-size: 0.8em;
+            white-space: pre;
+                font-size: 0.9em;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
         }
         footer {
             text-align: center;
