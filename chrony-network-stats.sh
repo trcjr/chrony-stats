@@ -118,8 +118,9 @@ generate_vnstat_images() {
     
     log_message "INFO" "Generating vnStat images for interface '$INTERFACE'..."
     local modes=("s" "d" "t" "h" "m" "y")
+    VNSTAT_CONF="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)/vnstat.conf"
     for mode in "${modes[@]}"; do
-        vnstati -"$mode" -i "$INTERFACE" -o "$OUTPUT_DIR/img/vnstat_${mode}.png" || {
+        vnstati --config $VNSTAT_CONF -"$mode" -i "$INTERFACE" -o "$OUTPUT_DIR/img/vnstat_${mode}.png" || {
             log_message "ERROR" "Failed to generate vnstat image for mode $mode Check configuaration section : INTERFACE=\"here\""
             exit 1
         }
