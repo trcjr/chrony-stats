@@ -22,7 +22,7 @@ GITHUB_REPO_LINK_SHOW="no" ## You can display the link to the repo 'chrony-stats
 
 ###### Advanced Configuration ######
 
-CHRONY_ALLOW_DNS_LOOKUP="yes" ##  Yes allow DNS reverse lookups. No to prevent slow DNS reverse lookups
+CHRONY_ALLOW_DNS_LOOKUP="no" ##  Yes allow DNS reverse lookups. No to prevent slow DNS reverse lookups
 DISPLAY_PRESET="default" # Preset for large screens. Options: default | 2k | 4k
 
 TIMEOUT_SECONDS=5
@@ -150,6 +150,7 @@ collect_chrony_data() {
     CHRONYC_SOURCES=$(get_html sources) || exit 1
     CHRONYC_SOURCESTATS=$(get_html sourcestats) || exit 1
     CHRONYC_SELECTDATA=$(get_html selectdata) || exit 1
+    CHRONYC_SERVERSTATS=$(get_html serverstats) || exit 1
 }
 
 extract_chronyc_values() {
@@ -729,6 +730,10 @@ EOF
 
                 <h3>Command: <code>chronyc${CHRONYC_DISPLAY_OPTS} tracking</code></h3>
                 <pre><code>${CHRONYC_TRACKING_HTML}</code></pre>
+
+                <h3>Command: <code>chronyc${CHRONYC_DISPLAY_OPTS} serverstats</code></h3>
+                <pre><code>${CHRONYC_SERVERSTATS}</code></pre>
+
             </section>
         </main>
 
