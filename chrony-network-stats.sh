@@ -13,10 +13,10 @@ HTML_FILENAME="index.html" ## Output HTML file name
 RRD_DIR="/var/lib/chrony-rrd"
 RRD_FILE="$RRD_DIR/chrony.rrd" ## RRD file for storing chrony statistics
 
-ENABLE_LOGGING="yes"
+ENABLE_LOGGING="no"
 LOG_FILE="/var/log/chrony-network-stats.log"
 
-AUTO_REFRESH_SECONDS=0 ## Auto-refresh interval in seconds (0 = disabled, e.g., 300 for 5 minutes)
+AUTO_REFRESH_SECONDS=300 ## Auto-refresh interval in seconds (0 = disabled, e.g., 300 for 5 minutes)
 GITHUB_REPO_LINK_SHOW="no" ## You can display the link to the repo 'chrony-stats' in the HTML footer | Not required | Default: no
 
 
